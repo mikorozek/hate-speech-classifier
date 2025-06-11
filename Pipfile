@@ -1,0 +1,17 @@
+[packages]
+black = "*"
+flake8 = "*"
+isort = "*"
+pip = "*"
+python-dotenv = "*"
+transformers = "*"
+torch = "*"
+scikit-learn = "*"
+datasets = "*"
+wandb = "*"
+numpy = "*"
+pandas = "*"
+
+[requires]
+python_version = "3.13"
+
