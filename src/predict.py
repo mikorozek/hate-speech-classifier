@@ -78,22 +78,25 @@ def predict_batch(model, dataset, device, batch_size=32):
         for i in range(0, len(dataset), batch_size):
             batch = dataset[i : i + batch_size]
             inputs = {
-                "input_ids": batch["input_ids"].detach().clone(),
-                "attention_mask": batch["attention_mask"].detach().clone(),
+                "input_ids": batch["input_ids"].to(device),
+                "attention_mask": batch["attention_mask"].to(device),
             }
             outputs = model(**inputs)
-            logits.extend(outputs.logits.tolist())
+            logits.extend(outputs.logits.cpu().tolist())
 
     return logits
 
 
 def main():
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = AutoTokenizer.from_pretrained(Config.MODEL_NAME)
-    test_dataset = load_or_create_dataset(tokenizer)
-    num_labels = len(set(test_dataset["label"]))
-    model = load_model_from_checkpoint(Config.MODEL_CHECKPOINT_PATH, num_labels)
-    logits = predict_batch(model, test_dataset, device)
+    prediction_dataset = load_or_create_prediction_data(tokenizer)
+    model = load_model_from_checkpoint(Config.MODEL_CHECKPOINT_PATH, 2)
+    logits = predict_batch(model, prediction_dataset, device)
     predictions = np.argmax(logits, axis=1)
+    np.savetxt(Config.OUTPUT_PREDICTION_PATH, predictions, fmt="%d", delimiter=",")
+    print(f"Predictions saved to {Config.OUTPUT_PREDICTION_PATH}")
+    print(f"Total predictions: {len(predictions)}")
 
 
 if __name__ == "__main__":
