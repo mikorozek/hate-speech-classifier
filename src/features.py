@@ -1,7 +1,7 @@
 from datasets import load_dataset
 import os
 import numpy as np
-from datasets import load_from_disk
+from datasets import load_from_disk, ClassLabel
 from transformers.tokenization_utils import PreTrainedTokenizer
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from src.config import Config
@@ -11,17 +11,47 @@ def compute_metrics(eval_pred):
     predictions, labels = eval_pred
     predictions = np.argmax(predictions, axis=1)
 
-    precision, recall, f1, _ = precision_recall_fscore_support(
-        labels, predictions, average="weighted"
-    )
-    accuracy = accuracy_score(labels, predictions)
-    return {"accuracy": accuracy, "f1": f1, "precision": precision, "recall": recall}
+    accuracy = np.sum(predictions == labels) / len(labels)
+
+    classes = np.unique(labels)
+    accuracies = []
+    precisions = []
+    recalls = []
+    f1s = []
+
+    for c in classes:
+        tp = np.sum((predictions == c) & (labels == c))
+        tn = np.sum((predictions != c) & (labels != c))
+        fp = np.sum((predictions == c) & (labels != c))
+        fn = np.sum((predictions != c) & (labels == c))
+
+        accuracy = tp + tn / (tp + fn + fp + fn) if (tp + fn + fp + fn) > 0 else 0
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+        f1 = (
+            2 * (precision * recall) / (precision + recall)
+            if (precision + recall) > 0
+            else 0
+        )
+
+        accuracies.append(accuracy)
+        precisions.append(precision)
+        recalls.append(recall)
+        f1s.append(f1)
+
+    return {
+        "accuracy": accuracy,
+        "f1": np.mean(f1s),
+        "precision": np.mean(precisions),
+        "recall": np.mean(recalls),
+    }
 
 
 def tokenize_and_save_datasets(tokenize_function):
     dataset = load_dataset("csv", data_files=Config.TRAIN_DATASET_PATH)
     dataset = dataset.map(tokenize_function, batched=True)
     dataset = dataset["train"]
+    dataset = dataset.cast_column("label", ClassLabel(names=[0, 1]))
     dataset = dataset.train_test_split(
         test_size=Config.VAL_SIZE,
         seed=42,

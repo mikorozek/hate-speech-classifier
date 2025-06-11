@@ -11,6 +11,8 @@ datasets = "*"
 wandb = "*"
 numpy = "*"
 pandas = "*"
+sacremoses = "*"
+accelerate = "*"
 
 [requires]
 python_version = "3.13"

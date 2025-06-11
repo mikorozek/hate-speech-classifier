@@ -10,6 +10,19 @@ from src.features import load_or_create_datasets, compute_metrics
 
 
 def main():
+    wandb.init(
+        project=Config.WANDB_PROJECT,
+        config={
+            "model_name": Config.MODEL_NAME,
+            "max_length": Config.MAX_LENGTH,
+            "batch_size": Config.BATCH_SIZE,
+            "learning_rate": Config.LEARNING_RATE,
+            "num_epochs": Config.NUM_EPOCHS,
+            "warmup_steps": Config.WARMUP_STEPS,
+            "weight_decay": Config.WEIGHT_DECAY,
+        },
+    )
+
     print(f"Using model: {Config.MODEL_NAME}")
 
     tokenizer = AutoTokenizer.from_pretrained(Config.TOKENIZER_NAME)
@@ -34,7 +47,7 @@ def main():
         eval_strategy="steps",
         eval_steps=Config.EVAL_STEPS,
         save_steps=Config.SAVE_STEPS,
-        logging_steps=100,
+        logging_steps=Config.LOGGING_STEPS,
         report_to="wandb",
         load_best_model_at_end=True,
     )
