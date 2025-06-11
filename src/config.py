@@ -17,8 +17,10 @@ class Config:
     OUTPUT_DIR = "results"
     TRAIN_DATASET_PATH = "data/hate_train.csv"
     BEST_MODEL_PATH = "/models"
+    PREDICTION_DATA = "data/hate_test_data.txt"
     DATASET_PATHS = {
         "train": "data/train_tokenized",
         "validation": "data/val_tokenized",
+        "prediciton": "data/pred_tokenized",
     }
     REQUIRED_COLUMNS = ["sentence", "label"]
